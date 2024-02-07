@@ -69,7 +69,7 @@ app.command('/time', async ({ command, ack, client, respond }) => {
   }
 });
 
-app.command('/list', async ({ command, ack, respond }) => {
+app.command('/list-locations', async ({ command, ack, respond }) => {
   await ack();
 
   const account = command.text.trim(); // Получаем параметр account из текста команды
@@ -97,6 +97,42 @@ app.command('/list', async ({ command, ack, respond }) => {
     await respond("Произошла ошибка при обработке вашего запроса.");
   }
 });
+
+app.command('/add-location', async ({ command, ack, respond }) => {
+  await ack();
+
+  // Разбиваем текст команды на аргументы
+  const [account, name, ...timezoneParts] = command.text.split(' ');
+  const timezone = timezoneParts.join(' ');
+
+  // Проверка валидности часового пояса
+  if (!moment.tz.zone(timezone)) {
+    await respond(`Введен невалидный часовой пояс: ${timezone}. Попробуйте еще раз.`);
+    return;
+  }
+
+  try {
+    const locationsPath = `./locations/${account}.json`;
+    let locations = {};
+
+    // Если файл существует, загружаем его содержимое
+    if (fs.existsSync(locationsPath)) {
+      locations = JSON.parse(fs.readFileSync(locationsPath, 'utf8'));
+    }
+
+    // Добавляем новую локацию
+    locations[name] = timezone;
+
+    // Сохраняем обновленный файл
+    fs.writeFileSync(locationsPath, JSON.stringify(locations, null, 2));
+
+    await respond(`Локация "${name}" с часовым поясом "${timezone}" успешно добавлена в "${account}".`);
+  } catch (error) {
+    console.error(error);
+    await respond("Произошла ошибка при добавлении локации. Пожалуйста, попробуйте еще раз.");
+  }
+});
+
 
 
 (async () => {
