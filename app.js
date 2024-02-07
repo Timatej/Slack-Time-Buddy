@@ -28,7 +28,6 @@ app.command('/time', async ({ command, ack, client, respond }) => {
     // Проверяем, существует ли файл. Если нет, используем default.json
     if (!fs.existsSync(locationsPath)) {
       console.log(`Файл ${fileName}.json не найден. Используется default.json.`);
-      fileName = 'default'; // Возврат к имени файла по умолчанию
       locationsPath = `./locations/${fileName}.json`;
       
       // Копирование default.json как новый файл, если было указано имя и оно не default
@@ -40,7 +39,7 @@ app.command('/time', async ({ command, ack, client, respond }) => {
     }
 
     const locations = JSON.parse(fs.readFileSync(locationsPath, 'utf8'));
-    
+
     const result = await app.client.users.info({
       token: process.env.SLACK_BOT_TOKEN,
       user: userId
