@@ -8,8 +8,6 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET
 });
 
-const locations = JSON.parse(fs.readFileSync('locations/default.json', 'utf8'));
-
 
 app.command('/time', async ({ command, ack, client, respond }) => {
   await ack();
@@ -102,8 +100,9 @@ app.command('/add-location', async ({ command, ack, respond }) => {
   await ack();
 
   // Разбиваем текст команды на аргументы
-  const [account, name, ...timezoneParts] = command.text.split(' ');
+  const [account, locationName, ...timezoneParts] = command.text.split(' ');
   const timezone = timezoneParts.join(' ');
+  const name = locationName.replace(/\P{L}/gu, '');
 
   // Проверка валидности часового пояса
   if (!moment.tz.zone(timezone)) {
@@ -137,7 +136,7 @@ app.command('/delete-location', async ({ command, ack, respond }) => {
   await ack();
 
   // Разбиваем текст команды на аргументы для получения account и name
-  const [account, name] = command.text.split(' ').map(arg => arg.trim());
+  const [account, locationName] = command.text.split(' ').map(arg => arg.trim());
 
   try {
     const locationsPath = `./locations/${account}.json`;
@@ -149,6 +148,8 @@ app.command('/delete-location', async ({ command, ack, respond }) => {
     }
 
     const locations = JSON.parse(fs.readFileSync(locationsPath, 'utf8'));
+
+    const name = locationName.replace(/\P{L}/gu, '');
 
     // Проверяем, существует ли локация
     if (!locations[name]) {
