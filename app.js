@@ -133,6 +133,41 @@ app.command('/add-location', async ({ command, ack, respond }) => {
   }
 });
 
+app.command('/delete-location', async ({ command, ack, respond }) => {
+  await ack();
+
+  // Разбиваем текст команды на аргументы для получения account и name
+  const [account, name] = command.text.split(' ').map(arg => arg.trim());
+
+  try {
+    const locationsPath = `./locations/${account}.json`;
+
+    // Проверяем, существует ли файл
+    if (!fs.existsSync(locationsPath)) {
+      await respond(`Аккаунт "${account}" не найден.`);
+      return;
+    }
+
+    const locations = JSON.parse(fs.readFileSync(locationsPath, 'utf8'));
+
+    // Проверяем, существует ли локация
+    if (!locations[name]) {
+      await respond(`Локация "${name}" не найдена в "${account}".`);
+      return;
+    }
+
+    // Удаляем локацию и сохраняем обновленный файл
+    delete locations[name];
+    fs.writeFileSync(locationsPath, JSON.stringify(locations, null, 2));
+
+    await respond(`Локация "${name}" успешно удалена из "${account}".`);
+  } catch (error) {
+    console.error(error);
+    await respond("Произошла ошибка при удалении локации. Пожалуйста, попробуйте еще раз.");
+  }
+});
+
+
 
 
 (async () => {
