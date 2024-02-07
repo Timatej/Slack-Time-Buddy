@@ -69,6 +69,36 @@ app.command('/time', async ({ command, ack, client, respond }) => {
   }
 });
 
+app.command('/list', async ({ command, ack, respond }) => {
+  await ack();
+
+  const account = command.text.trim(); // Получаем параметр account из текста команды
+
+  try {
+    const locationsPath = `./locations/${account}.json`;
+
+    if (fs.existsSync(locationsPath)) {
+      const locations = JSON.parse(fs.readFileSync(locationsPath, 'utf8'));
+      let responseText = "*Список локаций:*\n";
+      for (const [location, timezone] of Object.entries(locations)) {
+        responseText += `• *${location}* - ${timezone}\n`;
+      }
+
+      // Отправка списка локаций непосредственно пользователю через respond с markdown-форматированием
+      await respond({
+        text: responseText,
+        mrkdwn: true
+      });
+    } else {
+      await respond("Файл локаций не найден.");
+    }
+  } catch (error) {
+    console.error(error);
+    await respond("Произошла ошибка при обработке вашего запроса.");
+  }
+});
+
+
 (async () => {
   await app.start(process.env.PORT || 3000);
   console.log('⚡️ Slack app is running!');
