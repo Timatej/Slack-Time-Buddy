@@ -143,7 +143,7 @@ app.command('/delete-location', async ({ command, ack, respond }) => {
 
     // Проверяем, существует ли файл
     if (!fs.existsSync(locationsPath)) {
-      await respond(`Аккаунт "${account}" не найден.`);
+      await respond(`Список "${account}" не найден.`);
       return;
     }
 
