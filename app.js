@@ -1,5 +1,6 @@
 const { App } = require('@slack/bolt');
 const moment = require('moment-timezone');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = new App({
@@ -7,23 +8,39 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET
 });
 
-const locations = {
-  "Минск": "Europe/Minsk",
-  "Варшава": "Europe/Warsaw",
-  "Грузия": "Asia/Tbilisi",
-  "Калифорния": "America/Los_Angeles",
-  "Вирджиния": "America/New_York"
-};
+const locations = JSON.parse(fs.readFileSync('locations/default.json', 'utf8'));
+
 
 app.command('/time', async ({ command, ack, client, respond }) => {
   await ack();
 
-  const timeText = command.text;
+  const args = command.text.split(' ');
+  const timeText = args[0];
+  let fileName = args[1] ? args[1] : 'default';
   const userId = command.user_id;
   const channel_id = command.channel_id;
   const userName = command.user_name;
 
   try {
+
+    let locationsPath = `./locations/${fileName}.json`;
+
+    // Проверяем, существует ли файл. Если нет, используем default.json
+    if (!fs.existsSync(locationsPath)) {
+      console.log(`Файл ${fileName}.json не найден. Используется default.json.`);
+      fileName = 'default'; // Возврат к имени файла по умолчанию
+      locationsPath = `./locations/${fileName}.json`;
+      
+      // Копирование default.json как новый файл, если было указано имя и оно не default
+      if (args[1] && args[1].toLowerCase() !== 'default') {
+        const defaultPath = `./locations/default.json`;
+        fs.copyFileSync(defaultPath, locationsPath);
+        console.log(`Создана копия файла локаций: ${locationsPath}`);
+      }
+    }
+
+    const locations = JSON.parse(fs.readFileSync(locationsPath, 'utf8'));
+    
     const result = await app.client.users.info({
       token: process.env.SLACK_BOT_TOKEN,
       user: userId
